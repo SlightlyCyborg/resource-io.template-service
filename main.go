@@ -69,11 +69,16 @@ func handleUpdateTodoRequest(c *gin.Context) {
 	title := c.PostForm("title")
 	completed := c.PostForm("completed")
 
-	//This may be slow to do a fetch and then an update.
-	//The ByID does not have to actually retrieve the data from the database
-	//This is the beauty of abstraction.
-	//We can an build accesors to get the attributes as needed
-	t := todo.ByID(id)[0]
+	todos := todo.ByID(id)
+
+	if len(todos) < 1 {
+		response := gin.H{
+			"message": "Todo not found"}
+		c.JSON(http.StatusFound, response)
+		return
+	}
+
+	t := todos[0]
 
 	if title != "" {
 		t.Title = title
@@ -88,6 +93,7 @@ func handleUpdateTodoRequest(c *gin.Context) {
 
 	response := gin.H{
 		"message": "Todo updated successfully"}
+
 	c.JSON(http.StatusOK, response)
 }
 
