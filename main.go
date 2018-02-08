@@ -60,8 +60,11 @@ func handleFetchSingleTodoRequest(c *gin.Context) {
 		response := gin.H{
 			"data": todos[0]}
 		c.JSON(http.StatusFound, response)
+	} else {
+		response := gin.H{
+			"data": nil}
+		c.JSON(http.StatusNotFound, response)
 	}
-
 }
 
 func handleUpdateTodoRequest(c *gin.Context) {
