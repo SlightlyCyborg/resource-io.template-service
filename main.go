@@ -65,7 +65,30 @@ func handleFetchSingleTodoRequest(c *gin.Context) {
 }
 
 func handleUpdateTodoRequest(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	title := c.PostForm("title")
+	completed := c.PostForm("completed")
 
+	//This may be slow to do a fetch and then an update.
+	//The ByID does not have to actually retrieve the data from the database
+	//This is the beauty of abstraction.
+	//We can an build accesors to get the attributes as needed
+	t := todo.ByID(id)[0]
+
+	if title != "" {
+		t.Title = title
+	}
+	if completed != "" {
+		b_completed, err := strconv.ParseBool(completed)
+		if err == nil {
+			t.Completed = b_completed
+		}
+	}
+	t.Persist()
+
+	response := gin.H{
+		"message": "Todo updated successfully"}
+	c.JSON(http.StatusOK, response)
 }
 
 func handleDeleteTodoRequest(c *gin.Context) {

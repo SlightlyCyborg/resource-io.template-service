@@ -17,6 +17,7 @@ type Todo struct {
 	ID        int64
 	Title     string
 	Completed bool
+	in_db     bool
 }
 
 //PUBLIC
@@ -25,9 +26,11 @@ func New(title string, completed bool) Todo {
 	if db == nil {
 		log.Fatal("Todo model not connected to DB. Implement another for of persistence perhaps?")
 	}
-	todo := Todo{ID: -1, Title: title, Completed: completed}
-	id := todo.persist()
+	todo := Todo{ID: -1, Title: title, Completed: completed, in_db: false}
+	id := todo.Persist()
 	todo.ID = id
+	todo.in_db = true
+
 	return todo
 }
 
@@ -43,21 +46,28 @@ func ByID(id int64) []Todo {
 	return rv
 }
 
-//PRIVATE
+func (t Todo) Persist() int64 {
 
-func (t Todo) persist() int64 {
-	query, args, _ := sq.Insert("todos").
-		Columns("title", "completed").
-		Values(t.Title, t.Completed).ToSql()
+	if !t.in_db {
+		query, args, _ := sq.Insert("todos").
+			Columns("title", "completed").
+			Values(t.Title, t.Completed).ToSql()
 
-	fmt.Print(args)
-	result, err := db.Exec(query, args...)
-	fmt.Print("\nerr: \n\n")
-	fmt.Print(err)
-	fmt.Print("end-err\n")
-	id, _ := result.LastInsertId()
-	return id
+		result, _ := db.Exec(query, args...)
+		id, _ := result.LastInsertId()
+		return id
+	} else {
+		query, args, _ := sq.Update("todos").
+			Set("title", t.Title).
+			Set("completed", t.Completed).
+			Where(sq.Eq{"ID": t.ID}).ToSql()
+
+		db.Exec(query, args...)
+		return t.ID
+	}
 }
+
+//private
 
 func fromSQL(sql_str string, args []interface{}) []Todo {
 	fmt.Println(args)
@@ -81,7 +91,7 @@ func fromSQL(sql_str string, args []interface{}) []Todo {
 		fmt.Print(err)
 		fmt.Print("</err>\n")
 
-		rv = append(rv, Todo{ID: id, Title: title, Completed: completed})
+		rv = append(rv, Todo{ID: id, Title: title, Completed: completed, in_db: true})
 	}
 	return rv
 }
