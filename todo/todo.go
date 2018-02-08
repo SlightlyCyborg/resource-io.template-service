@@ -21,7 +21,6 @@ type Todo struct {
 }
 
 //PUBLIC
-
 func New(title string, completed bool) Todo {
 	if db == nil {
 		log.Fatal("Todo model not connected to DB. Implement another for of persistence perhaps?")
@@ -46,6 +45,22 @@ func ByID(id int64) []Todo {
 	return rv
 }
 
+func (t Todo) Delete() bool {
+	if t.ID == -1 {
+		return false
+	}
+
+	query, args, _ := sq.Delete("todos").Where(sq.Eq{"ID": t.ID}).ToSql()
+
+	_, err := db.Exec(query, args...)
+
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (t Todo) Persist() int64 {
 
 	if !t.in_db {
@@ -68,7 +83,6 @@ func (t Todo) Persist() int64 {
 }
 
 //private
-
 func fromSQL(sql_str string, args []interface{}) []Todo {
 	fmt.Println(args)
 	var rows *sql.Rows

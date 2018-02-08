@@ -92,5 +92,26 @@ func handleUpdateTodoRequest(c *gin.Context) {
 }
 
 func handleDeleteTodoRequest(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	t := todo.ByID(id)[0]
+	b_deleted := t.Delete()
+
+	var response gin.H
+	var status int
+
+	if b_deleted {
+		response = gin.H{
+			"message": "Todo deleted successfully"}
+
+		status = http.StatusOK
+
+	} else {
+		response = gin.H{
+			"message": "Todo was not deleted"}
+
+		status = http.StatusInternalServerError
+	}
+
+	c.JSON(status, response)
 
 }
